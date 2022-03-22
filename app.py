@@ -1,5 +1,4 @@
 from os import environ
-
 from flask import Flask, request
 import logging
 import json
