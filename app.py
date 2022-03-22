@@ -26,7 +26,7 @@ def main():
 
 def handle_dialog(res, req):
     if req["request"]["command"] == "помощь":
-        res["response"]["text"] = "Эту игру создал NeMo lliriK, чтобы любой мог попрактиковаться в угадывании городов!"
+        res["response"]["text"] = "Я тебе буду показывать изображения городов, а ты будешь пытаться их отгадать."
         return
     user_id = req['session']['user_id']
     if req['session']['new']:
