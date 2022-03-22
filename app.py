@@ -1,3 +1,5 @@
+from os import environ
+
 from flask import Flask, request
 import logging
 import json
@@ -108,4 +110,4 @@ def get_first_name(req):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=int(environ.get("PORT", 5000)))
