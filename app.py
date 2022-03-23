@@ -1,4 +1,5 @@
 from os import environ
+import requests
 from flask import Flask, request
 import logging
 import json
@@ -77,15 +78,23 @@ def play_game(res, req):
         res['response']['card']['title'] = 'Что это за город?'
         res['response']['card']['image_id'] = cities[city][attempt - 1]
         res['response']['text'] = 'Тогда сыграем!'
+        sessionStorage[user_id]["country"] = 0
     else:
+        country = sessionStorage[user_id]["country"]
         city = sessionStorage[user_id]['city']
-        if get_city(req) == city:
-            res['response']['text'] = 'Правильно! Сыграем ещё?'
+        if country:
+            if country.lower() == get_country(req):
+                res['response']['text'] = 'Правильно! Сыграем ещё?'
+                sessionStorage[user_id]['game_started'] = False
+                res["response"]["buttons"] = [{"title": "Покажи город на карте", "hide": True,
+                                               "url": f"https://yandex.ru/maps/?mode=search&text={city}"}]
+            else:
+                res['response']['text'] = f'Вы пытались. Это {country.title()}. Сыграем ещё?'
+                sessionStorage[user_id]['game_started'] = False
+        elif get_city(req) == city:
+            res['response']['text'] = 'Правильно! А в какой стране этот город?'
+            sessionStorage[user_id]['country'] = get_geo_info(city, "country")
             sessionStorage[user_id]['guessed_cities'].append(city)
-            sessionStorage[user_id]['game_started'] = False
-            res["response"]["buttons"] = [{"title": "Покажи город на карте", "hide": True,
-                                           "url": f"https://yandex.ru/maps/?mode=search&text={city}"}]
-            return
         else:
             if attempt == 3:
                 res['response']['text'] = f'Вы пытались. Это {city.title()}. Сыграем ещё?'
@@ -111,6 +120,22 @@ def get_first_name(req):
     for entity in req['request']['nlu']['entities']:
         if entity['type'] == 'YANDEX.FIO':
             return entity['value'].get('first_name', None)
+
+
+def get_country(req):
+    for entity in req['request']['nlu']['entities']:
+        if entity['type'] == 'YANDEX.GEO':
+            return entity['value'].get('country', None)
+
+
+def get_geo_info(city_name, type_info):
+    info = requests.get(f"https://geocode-maps.yandex.ru/1.x/?geocode={city_name}&format=json&apikey=40d1649f-0493-4b70"
+                        f"-98ba-98533de7710b").json()['response']['GeoObjectCollection']['featureMember'][0][
+        'GeoObject']
+    if type_info == 'country':
+        return info['metaDataProperty']['GeocoderMetaData']['AddressDetails']['Country']['CountryName']
+    elif type_info == 'coordinates':
+        return [float(x) for x in info["Point"]["pos"].split()]
 
 
 if __name__ == '__main__':
