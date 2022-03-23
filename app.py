@@ -54,6 +54,9 @@ def handle_dialog(res, req):
             elif 'нет' in req['request']['nlu']['tokens']:
                 res['response']['text'] = 'Ну и ладно!'
                 res['end_session'] = True
+            elif 'Покажи город на карте' == req["request"]["original_utterance"]:
+                res['response']['text'] = 'Посмотрел город на карте? Молодец! А теперь выбери, продолжать ли игру.'
+                res['response']['buttons'] = [{'title': 'Да', 'hide': True}, {'title': 'Нет', 'hide': True}]
             else:
                 res['response']['text'] = 'Не поняла ответа! Так да или нет?'
                 res['response']['buttons'] = [{'title': 'Да', 'hide': True}, {'title': 'Нет', 'hide': True}]
@@ -80,6 +83,8 @@ def play_game(res, req):
             res['response']['text'] = 'Правильно! Сыграем ещё?'
             sessionStorage[user_id]['guessed_cities'].append(city)
             sessionStorage[user_id]['game_started'] = False
+            res["response"]["buttons"] = [{"title": "Покажи город на карте", "hide": True,
+                                           "url": f"https://yandex.ru/maps/?mode=search&text={city}"}]
             return
         else:
             if attempt == 3:
